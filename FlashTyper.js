@@ -3,7 +3,7 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const { resolveConfig } = require('./src/config');
 const { stripStatsPrefix } = require('./src/text');
 const { typePassage } = require('./src/typer');
-const { parseResult } = require('./src/result');
+const { parseLiveStats, mergePeak, formatPeak } = require('./src/stats');
 
 // Register the stealth plugin once at module load. puppeteer-extra holds a
 // single shared instance, so registering here covers every runTyper() call and
@@ -17,6 +17,10 @@ const PASSAGE_SELECTOR = '.screen-display .text';
 const STATS_SELECTOR = '.screen-display .indicators, .typing-stats';
 // Container the site navigates to when the timed test ends.
 const RESULT_SELECTOR = '.typing-speed-test-result';
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 // Keep a visible browser open so the result can be viewed live: resolve when
 // the user closes the window (browser disconnects) or after holdOpenMs, first.
@@ -74,24 +78,42 @@ async function runTyper(config) {
       throw new Error('Extracted passage was empty after stripping stats');
     }
 
+    // Poll the live .indicators stats for the peak speed. The site caps the
+    // end-of-test number for superhuman runs, but the live readout spikes to the
+    // real burst figure mid-test — so sample repeatedly and keep the maximum.
+    let peak = { wpm: null, cpm: null };
+    let polling = true;
+    const pollLoop = (async () => {
+      while (polling) {
+        try {
+          const text = await page.evaluate((sel) => {
+            const node = document.querySelector(sel);
+            return node ? node.textContent : null;
+          }, STATS_SELECTOR);
+          peak = mergePeak(peak, parseLiveStats(text));
+        } catch {
+          // Transient read failure (e.g. navigation/detach); keep polling.
+        }
+        await sleep(config.livePollMs);
+      }
+    })();
+
     // Type one throwaway key first — this is what starts the timed test on the
     // site — then type the scraped passage.
     await page.keyboard.type('j');
     await typePassage(page.keyboard, passage, { delayMs: config.typingDelayMs });
 
-    // Keep going until completion: the site runs a fixed ~60s timer and then
-    // renders the results screen. Wait for that screen instead of a fixed sleep.
-    await page.waitForSelector(RESULT_SELECTOR, { timeout: config.resultTimeoutMs });
-    const resultText = await page.evaluate((sel) => {
-      const node = document.querySelector(sel);
-      return node ? node.textContent : null;
-    }, RESULT_SELECTOR);
+    // Keep sampling briefly after the burst to catch the post-typing spike, then
+    // stop the loop and report the peak we saw.
+    await sleep(config.liveSettleMs);
+    polling = false;
+    await pollLoop;
 
-    const result = parseResult(page.url(), resultText);
+    const peakSummary = formatPeak(peak);
     console.log(
-      result.summary
-        ? `[FlashTyper] Test complete — ${result.summary}`
-        : '[FlashTyper] Test complete (could not parse the result)'
+      peakSummary
+        ? `[FlashTyper] Peak live speed — ${peakSummary}`
+        : '[FlashTyper] Test complete (could not read live speed)'
     );
 
     // In a visible window, keep it open so the result can be viewed live, until
@@ -100,7 +122,7 @@ async function runTyper(config) {
       await holdOpenUntilClosed(browser, config.holdOpenMs);
     }
 
-    return result;
+    return { peak };
   } catch (err) {
     console.error('[FlashTyper] failed:', err.message);
     process.exitCode = 1;
