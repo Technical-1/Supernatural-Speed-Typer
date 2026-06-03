@@ -13,4 +13,19 @@ function parseLiveStats(text) {
   };
 }
 
-module.exports = { parseLiveStats };
+function maxOrNull(a, b) {
+  if (a == null) return b == null ? null : b;
+  if (b == null) return a;
+  return a > b ? a : b;
+}
+
+function mergePeak(peak, sample) {
+  const p = peak || { wpm: null, cpm: null };
+  const s = sample || { wpm: null, cpm: null };
+  return {
+    wpm: maxOrNull(p.wpm, s.wpm),
+    cpm: maxOrNull(p.cpm, s.cpm),
+  };
+}
+
+module.exports = { parseLiveStats, mergePeak };
