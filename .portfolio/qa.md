@@ -24,8 +24,8 @@ It runs through `puppeteer-extra` with the stealth plugin to avoid the obvious a
 ### Resilient scraping
 It targets a semantic class path (`.screen-display .text`) rather than generated style hashes and strips the page's stats bar dynamically, so routine site changes don't silently break the scrape.
 
-### Reports the real result
-After the timed test finishes, the tool waits for the results screen, parses the WPM, accuracy, and "better than X% of all users" percentile, and prints a one-line summary — so a run is self-verifying rather than something you have to eyeball.
+### Reports the peak live speed
+The site caps superhuman runs at the end of the test, so a burst-typed passage that briefly shows thousands of WPM in the live stats gets reported as a low final number. To get the honest figure, the tool samples the live stats readout while typing (and for a short settle window afterward), keeps the highest WPM/CPM it sees, and prints that peak — so a run is self-verifying rather than something you have to eyeball.
 
 ## Technical Highlights
 
@@ -41,8 +41,8 @@ The scraped display text is the stats bar glued to the passage. `stripStatsPrefi
 ### Teardown that survives every failure path
 `runTyper` in `FlashTyper.js` wraps the run in `try/catch/finally` with the browser handles hoisted, so the context and browser close whether the run succeeds, throws, or times out — no orphaned Chromium left behind.
 
-### Trusting the screen over the URL for the result
-`parseResult` in `src/result.js` reads the displayed results container first for WPM, accuracy, and the percentile, and only falls back to the figures encoded in the results URL path for fields the screen didn't yield. This matters because instant-typed runs can produce a URL figure that diverges from what the screen actually shows — and the screen is what a human would read, so it's the honest number to report.
+### Beating the end-of-test cap by sampling the live readout
+The site re-averages and caps superhuman runs, so the final screen understates a burst-typed run. The fix is in `src/stats.js` and a concurrent poll loop in `FlashTyper.js`: while the passage is being typed, the loop reads the live `.indicators` stats every `livePollMs`, `parseLiveStats` pulls the current WPM/CPM out of each sample, and `mergePeak` keeps the element-wise maximum. Sampling runs for `liveSettleMs` past the last keystroke to catch the spike that lands just after typing, then `formatPeak` renders the peak. The real figure only ever surfaces in the live readout mid-test, so capturing it requires watching that readout as the burst happens rather than reading anything at the end.
 
 ## Engineering Decisions
 
@@ -79,7 +79,7 @@ The site starts the timed test on the first keystroke, so the tool types one thr
 The site is built with styled-components, whose generated class names change on every rebuild. Semantic classes like `.screen-display .text` are stable, so the scrape doesn't break when the build hashes change. Scoping to the inner `.text` node also keeps the sibling stats table (`.indicators`) out of the scrape entirely.
 
 ### How does it report the result?
-After typing, it waits for the results screen (the site runs a fixed ~60s timer first), then `parseResult` reads the WPM, accuracy, and percentile and logs a line like `Test complete — 132 WPM, 100% accuracy — better than 99.1% of all users`. In a visible window it also stays open afterward so you can read the screen yourself, until you close it or `HOLD_OPEN_MS` elapses.
+It doesn't read the end-of-test screen — the site caps superhuman runs there. Instead, a poll loop samples the live stats readout every `LIVE_POLL_MS` while typing and keeps the highest WPM/CPM seen; it keeps sampling for `LIVE_SETTLE_MS` after the last keystroke to catch the post-burst spike, then logs a line like `Peak live speed — 4200 WPM, 8400 CPM`. In a visible window it also stays open afterward so you can read the screen yourself, until you close it or `HOLD_OPEN_MS` elapses.
 
 ### Why is the stats stripping done with a regex fallback at all?
 The preferred path slices an exact, live-read stats string. The regex exists only for when that text isn't available, and it's deliberately conservative — it requires a numeric token before stripping, so it can't accidentally remove real passage words.

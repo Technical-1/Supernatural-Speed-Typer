@@ -7,6 +7,7 @@ I built this to explore browser automation with Puppeteer end to end: driving a 
 ## Features
 
 - **Automated typing** — launches Chromium, waits for the test passage to render, scrapes it, and types it character by character (pressing Enter on line breaks).
+- **Peak live speed** — samples the site's live stats readout while typing and keeps the highest WPM/CPM seen, then prints that peak instead of the site's end-of-test number (which caps superhuman runs).
 - **Tunable speed** — `TYPING_DELAY_MS` sets the per-keystroke delay; ~0 ms lands around 1200 WPM, ~80 ms around 130 WPM for a more believable result.
 - **Stealth automation** — `puppeteer-extra-plugin-stealth` masks the common headless/automation fingerprints sites use to detect bots.
 - **Resilient scraping** — a stable semantic selector plus dynamic stats stripping survive minor changes to the site's UI instead of breaking on every rebuild.
@@ -46,13 +47,14 @@ Configure behavior with environment variables:
 | `HEADLESS` | `false` | Set `true` to run without a visible window |
 | `TYPING_DELAY_MS` | `0` | Per-keystroke delay; higher = more believable WPM |
 | `WAIT_TIMEOUT_MS` | `15000` | How long to wait for the passage to load |
-| `RESULT_TIMEOUT_MS` | `90000` | How long to wait for the results screen after typing (the test runs a fixed ~60s) |
-| `HOLD_OPEN_MS` | `120000` | In a visible window, how long to keep it open on the results screen (or until you close it). Ignored when headless |
+| `LIVE_POLL_MS` | `75` | How often to sample the live stats for the peak speed |
+| `LIVE_SETTLE_MS` | `1500` | How long to keep sampling after typing to catch the peak |
+| `HOLD_OPEN_MS` | `120000` | In a visible window, how long to keep it open after the run (or until you close it). Ignored when headless |
 
-After typing, the tool waits for the test to finish, then prints the result, e.g.:
+The site re-averages and caps superhuman runs at the end of the test — a passage burst-typed in a second briefly shows thousands of WPM in the live stats but gets reported as a low final number. So instead of reading the end-of-test screen, the tool samples the live stats readout while typing (and for a short settle window afterward), keeps the highest WPM/CPM it sees, and prints that peak, e.g.:
 
 ```
-[FlashTyper] Test complete — 132 WPM, 100% accuracy — better than 99.1% of all users
+[FlashTyper] Peak live speed — 4200 WPM, 8400 CPM
 ```
 
 ```bash
@@ -81,6 +83,7 @@ Supernatural-Speed-Typer/
 ├── src/
 │   ├── config.js          # Environment-driven configuration
 │   ├── text.js            # Stats-prefix stripping (scrape cleanup)
+│   ├── stats.js           # Live-stats parsing + peak tracking
 │   └── typer.js           # Code-point-safe keystroke loop
 └── test/
     ├── unit/              # Pure-logic unit tests
