@@ -26,7 +26,7 @@
 - **Package Manager**: npm
 - **Linting**: none
 - **Formatting**: none
-- **Testing**: `node:test` — unit suites under `test/unit/`, an offline Chromium integration test under `test/integration/`
+- **Testing**: `node:test` — unit suites under `test/unit/` (including `test/unit/stats.test.js` for live-stats parsing and peak tracking), an offline Chromium integration test under `test/integration/`
 
 ## Key Dependencies
 

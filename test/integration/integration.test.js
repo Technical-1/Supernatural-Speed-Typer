@@ -5,7 +5,7 @@ const { pathToFileURL } = require('node:url');
 const puppeteer = require('puppeteer-extra');
 // Requiring FlashTyper.js registers the stealth plugin on the shared
 // puppeteer-extra instance, so this test file does not register it again.
-const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR, RESULT_SELECTOR } = require('../../FlashTyper.js');
+const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR } = require('../../FlashTyper.js');
 const { stripStatsPrefix } = require('../../src/text');
 const { typePassage } = require('../../src/typer');
 
@@ -27,6 +27,8 @@ test('runTyper completes cleanly against a local fixture (lifecycle + teardown)'
       waitTimeoutMs: 15000,
       resultTimeoutMs: 15000,
       holdOpenMs: 0,
+      livePollMs: 20,
+      liveSettleMs: 1200,
     });
     assert.equal(process.exitCode, 0, 'runTyper should finish without setting a failure exit code');
   } finally {
@@ -34,7 +36,7 @@ test('runTyper completes cleanly against a local fixture (lifecycle + teardown)'
   }
 });
 
-test('runTyper waits for the results page and returns the parsed result', async () => {
+test('runTyper captures the peak live speed from the indicators table', async () => {
   const result = await runTyper({
     url: FIXTURE_URL,
     executablePath: undefined,
@@ -43,11 +45,13 @@ test('runTyper waits for the results page and returns the parsed result', async 
     waitTimeoutMs: 15000,
     resultTimeoutMs: 15000,
     holdOpenMs: 0,
+    livePollMs: 20,
+    liveSettleMs: 1200,
   });
   assert.ok(result, 'runTyper should resolve to a result object');
-  assert.equal(result.wpm, 80);
-  assert.equal(result.accuracy, 100);
-  assert.equal(result.percentile, 98.35);
+  assert.ok(result.peak, 'result should carry a peak');
+  assert.equal(result.peak.wpm, 4200);
+  assert.equal(result.peak.cpm, 8400);
 });
 
 test('scrape + strip + type writes the passage into the focused field', async () => {

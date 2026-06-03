@@ -11,6 +11,8 @@ test('defaults reproduce current behavior when env is empty', () => {
   assert.equal(c.waitTimeoutMs, 15000);
   assert.equal(c.resultTimeoutMs, 90000);
   assert.equal(c.holdOpenMs, 120000);
+  assert.equal(c.livePollMs, 75);
+  assert.equal(c.liveSettleMs, 1500);
 });
 
 test('RESULT_TIMEOUT_MS and HOLD_OPEN_MS are parsed; bad values fall back', () => {
@@ -34,4 +36,11 @@ test('numeric envs are parsed; bad values fall back to defaults', () => {
 test('HEADLESS is true only for the literal string "true"', () => {
   assert.equal(resolveConfig({ HEADLESS: 'true' }).headless, true);
   assert.equal(resolveConfig({ HEADLESS: '1' }).headless, false);
+});
+
+test('LIVE_POLL_MS and LIVE_SETTLE_MS are parsed; bad values fall back', () => {
+  assert.equal(resolveConfig({ LIVE_POLL_MS: '25' }).livePollMs, 25);
+  assert.equal(resolveConfig({ LIVE_POLL_MS: 'nope' }).livePollMs, 75);
+  assert.equal(resolveConfig({ LIVE_SETTLE_MS: '800' }).liveSettleMs, 800);
+  assert.equal(resolveConfig({ LIVE_SETTLE_MS: 'nope' }).liveSettleMs, 1500);
 });

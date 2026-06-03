@@ -42,17 +42,17 @@
             '<span class="char"><span>jumps<i class="spacer"> </i>over</span></span>' +
           '</div>';
       }, 300);
-      // Mirror the end of the test: a while after typing, the site replaces the
-      // view with a results container. Inject it later so the results-readiness
-      // wait is genuinely exercised (it must not already be in the DOM).
-      setTimeout(function () {
-        var el = document.createElement('div');
-        el.className = 'container typing-speed-test-result';
-        el.textContent =
-          'Your typing speed is 80WPM Accuracy 100% ' +
-          'It is better than 98.35% of all users';
-        document.body.appendChild(el);
-      }, 600);
+      // Mirror the live stats updating during the test: WPM/CPM climb as the
+      // bot types its burst, then hold at the peak. The poller must capture the
+      // maximum (4200 WPM / 8400 CPM).
+      function setLive(wpm, cpm) {
+        var cells = document.querySelectorAll('.indicators td h3 b');
+        // cells: [accuracy, wpm, cpm, time, errors]
+        if (cells[1]) cells[1].textContent = String(wpm);
+        if (cells[2]) cells[2].textContent = String(cpm);
+      }
+      setTimeout(function () { setLive(1200, 2400); }, 350);
+      setTimeout(function () { setLive(4200, 8400); }, 500);
       document.getElementById('capture').focus();
     </script>
   </body>
