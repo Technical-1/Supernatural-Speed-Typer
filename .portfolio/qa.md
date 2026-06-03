@@ -79,7 +79,7 @@ The site starts the timed test on the first keystroke, so the tool types one thr
 The site is built with styled-components, whose generated class names change on every rebuild. Semantic classes like `.screen-display .text` are stable, so the scrape doesn't break when the build hashes change. Scoping to the inner `.text` node also keeps the sibling stats table (`.indicators`) out of the scrape entirely.
 
 ### How does it report the result?
-It doesn't read the end-of-test screen — the site caps superhuman runs there. Instead, a poll loop samples the live stats readout every `LIVE_POLL_MS` while typing and keeps the highest WPM/CPM seen; it keeps sampling for `LIVE_SETTLE_MS` after the last keystroke to catch the post-burst spike, then logs a line like `Peak live speed — 4200 WPM, 8400 CPM`. In a visible window it also stays open afterward so you can read the screen yourself, until you close it or `HOLD_OPEN_MS` elapses.
+It doesn't read the end-of-test screen — the site caps superhuman runs there. Instead, a poll loop samples the live stats readout every `LIVE_POLL_MS` while typing and keeps the highest WPM/CPM seen; it keeps sampling for `LIVE_SETTLE_MS` after the last keystroke to catch the post-burst spike, then logs a line like `Peak live speed — 4200 WPM, 8400 CPM`. A visible window stays up only until the site redirects to its results screen, then closes automatically (`HOLD_OPEN_MS` caps that wait so it never hangs).
 
 ### Why is the stats stripping done with a regex fallback at all?
 The preferred path slices an exact, live-read stats string. The regex exists only for when that text isn't available, and it's deliberately conservative — it requires a numeric token before stripping, so it can't accidentally remove real passage words.

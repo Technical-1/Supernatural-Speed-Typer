@@ -16,7 +16,7 @@ flowchart TD
     TYPE --> SETTLE[sample liveSettleMs more → stop poll loop]
     SETTLE --> REPORT[formatPeak → log peak WPM/CPM]
     POLL -. concurrent .-> TYPE
-    REPORT --> HOLD[holdOpenUntilClosed if visible]
+    REPORT --> HOLD[if visible: wait for results screen, then close]
     HOLD --> TD[finally: close context then browser]
     NAV -. timeout/null .-> ERR[catch: log + exitCode 1]
     ERR --> TD
@@ -27,12 +27,12 @@ flowchart TD
 ### Orchestrator
 - **Purpose**: Owns the browser session and sequences the run: launch → isolated context → wait for readiness → scrape → poll for peak live speed while typing → report peak → guaranteed teardown.
 - **Location**: `FlashTyper.js`
-- **Key responsibilities**: Registers the stealth plugin once at module load; exposes `runTyper(config)` and a `main()` entry point; wraps the whole run in `try/catch/finally` so the browser always closes; holds the stable DOM selectors (passage, stats); runs a concurrent poll loop that samples the live `.indicators` stats every `livePollMs` and folds each sample into the running peak, continuing for `liveSettleMs` after typing before stopping and logging the peak; keeps a visible window open via `holdOpenUntilClosed` until the user closes it or `holdOpenMs` elapses.
+- **Key responsibilities**: Registers the stealth plugin once at module load; exposes `runTyper(config)` and a `main()` entry point; wraps the whole run in `try/catch/finally` so the browser always closes; holds the stable DOM selectors (passage, stats); runs a concurrent poll loop that samples the live `.indicators` stats every `livePollMs` and folds each sample into the running peak, continuing for `liveSettleMs` after typing before stopping and logging the peak; closes the default-context blank page so a headful run shows a single window, and keeps a visible window up only until the site redirects to its results screen (capped by `holdOpenMs`) before tearing down.
 
 ### Configuration
 - **Purpose**: Turns environment variables into a single typed config object so behavior is changed without touching code.
 - **Location**: `src/config.js`
-- **Key responsibilities**: `resolveConfig(env)` resolves the target URL, Chrome executable path, headless flag, per-keystroke delay, the passage-wait timeout, the live-stats poll interval (`livePollMs`) and post-typing settle window (`liveSettleMs`), and the visible-window hold-open duration, applying safe defaults and numeric parsing with fallbacks.
+- **Key responsibilities**: `resolveConfig(env)` resolves the target URL, Chrome executable path, headless flag, per-keystroke delay, the passage-wait timeout, the live-stats poll interval (`livePollMs`) and post-typing settle window (`liveSettleMs`), and the cap on how long a visible window waits for the results screen before closing (`holdOpenMs`), applying safe defaults and numeric parsing with fallbacks.
 
 ### Scrape cleanup
 - **Purpose**: Extracts the passage to type from the raw text content of the test display, which is prefixed with the live stats bar.
@@ -58,7 +58,7 @@ flowchart TD
 5. Before typing it starts a concurrent poll loop that reads the live `.indicators` stats every `livePollMs`, parsing each sample with `parseLiveStats` and folding it into the running peak via `mergePeak`.
 6. It types one throwaway key to start the timed test, then `typePassage` replays the passage keystroke by keystroke — the poll loop runs the whole time.
 7. After typing it keeps sampling for `liveSettleMs` to catch the post-burst spike, then stops the loop and logs the peak via `formatPeak`. There's no results-screen wait or parse — the live peak is the reported figure.
-8. In a visible window, `holdOpenUntilClosed` keeps the browser open so the result can be read, until the user closes it or `holdOpenMs` elapses (no-op when headless).
+8. In a visible window, it waits for the site to redirect to its results screen and then closes (capped by `holdOpenMs` so it never hangs); no-op when headless.
 9. A `finally` block stops the poll loop and closes the context and the browser on every path — success, error, or timeout.
 
 ## External Integrations
