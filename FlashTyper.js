@@ -37,6 +37,9 @@ function holdOpenUntilClosed(browser, holdOpenMs) {
 async function runTyper(config) {
   let browser;
   let context;
+  let polling = false;
+  let pollLoop = null;
+  let peak = { wpm: null, cpm: null };
   try {
     browser = await puppeteer.launch({
       headless: config.headless,
@@ -81,9 +84,8 @@ async function runTyper(config) {
     // Poll the live .indicators stats for the peak speed. The site caps the
     // end-of-test number for superhuman runs, but the live readout spikes to the
     // real burst figure mid-test — so sample repeatedly and keep the maximum.
-    let peak = { wpm: null, cpm: null };
-    let polling = true;
-    const pollLoop = (async () => {
+    polling = true;
+    pollLoop = (async () => {
       while (polling) {
         try {
           const text = await page.evaluate((sel) => {
@@ -127,6 +129,10 @@ async function runTyper(config) {
     console.error('[FlashTyper] failed:', err.message);
     process.exitCode = 1;
   } finally {
+    // Stop the live-stats poll loop before teardown so it can't keep calling
+    // page.evaluate against a closing page (which would reject unhandled).
+    polling = false;
+    if (pollLoop) await pollLoop.catch(() => {});
     // #1124: guaranteed teardown — no orphaned Chrome on any path.
     if (context) await context.close().catch(() => {});
     if (browser) await browser.close().catch(() => {});
