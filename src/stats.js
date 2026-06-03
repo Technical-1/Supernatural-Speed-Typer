@@ -5,8 +5,8 @@
 
 function parseLiveStats(text) {
   if (typeof text !== 'string') return { wpm: null, cpm: null };
-  const w = text.match(/(\d+)\s*WPM/i);
-  const c = text.match(/(\d+)\s*CPM/i);
+  const w = text.match(/(\d+)\s*WPM/);
+  const c = text.match(/(\d+)\s*CPM/);
   return {
     wpm: w ? Number(w[1]) : null,
     cpm: c ? Number(c[1]) : null,

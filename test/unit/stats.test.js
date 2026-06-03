@@ -1,6 +1,6 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
-const { parseLiveStats } = require('../../src/stats');
+const { parseLiveStats, mergePeak, formatPeak } = require('../../src/stats');
 
 // The .indicators textContent arrives glued together, like the real site:
 // "AccuracySpeedTimeErrors<acc>%<wpm>WPM<cpm>CPM<time>s<err>/<err>"
@@ -25,8 +25,6 @@ test('returns nulls for non-string or empty input', () => {
   assert.deepEqual(parseLiveStats(''), { wpm: null, cpm: null });
 });
 
-const { mergePeak } = require('../../src/stats');
-
 const EMPTY_PEAK = { wpm: null, cpm: null };
 
 test('mergePeak keeps the larger of each field', () => {
@@ -43,9 +41,9 @@ test('mergePeak treats null as "no value" on either side', () => {
 
 test('mergePeak tolerates a missing sample object', () => {
   assert.deepEqual(mergePeak(EMPTY_PEAK, null), { wpm: null, cpm: null });
+  assert.deepEqual(mergePeak(null, { wpm: 100, cpm: 200 }), { wpm: 100, cpm: 200 });
+  assert.deepEqual(mergePeak(null, null), { wpm: null, cpm: null });
 });
-
-const { formatPeak } = require('../../src/stats');
 
 test('formatPeak renders both fields', () => {
   assert.equal(formatPeak({ wpm: 4200, cpm: 8400 }), '4200 WPM, 8400 CPM');
