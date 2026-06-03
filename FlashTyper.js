@@ -22,18 +22,6 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Keep a visible browser open so the result can be viewed live: resolve when
-// the user closes the window (browser disconnects) or after holdOpenMs, first.
-function holdOpenUntilClosed(browser, holdOpenMs) {
-  return new Promise((resolve) => {
-    const timer = setTimeout(resolve, holdOpenMs);
-    browser.once('disconnected', () => {
-      clearTimeout(timer);
-      resolve();
-    });
-  });
-}
-
 async function runTyper(config) {
   let browser;
   let context;
@@ -45,9 +33,14 @@ async function runTyper(config) {
       headless: config.headless,
       executablePath: config.executablePath,
     });
+    // launch() opens a blank page in the DEFAULT context. Capture it now so we
+    // can close it after opening our own — otherwise headful runs show two
+    // windows: the stray blank one and the real isolated-context page.
+    const defaultPages = await browser.pages();
     // #1123: use an isolated context AND open the page from it.
     context = await browser.createBrowserContext();
     const page = await context.newPage();
+    await Promise.all(defaultPages.map((p) => p.close().catch(() => {})));
 
     await page.goto(config.url, { waitUntil: 'domcontentloaded' });
 
@@ -118,10 +111,14 @@ async function runTyper(config) {
         : '[FlashTyper] Test complete (could not read live speed)'
     );
 
-    // In a visible window, keep it open so the result can be viewed live, until
-    // the user closes it (capped by holdOpenMs). No-op when headless.
+    // In a visible window, keep it up only until the site redirects to the
+    // results screen, then fall through to teardown and close it — no lingering.
+    // holdOpenMs caps the wait so we never hang if the results never appear.
+    // No-op when headless.
     if (!config.headless && config.holdOpenMs > 0) {
-      await holdOpenUntilClosed(browser, config.holdOpenMs);
+      await page
+        .waitForSelector(RESULT_SELECTOR, { timeout: config.holdOpenMs })
+        .catch(() => {});
     }
 
     return { peak };

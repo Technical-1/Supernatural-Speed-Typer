@@ -49,7 +49,7 @@ Configure behavior with environment variables:
 | `WAIT_TIMEOUT_MS` | `15000` | How long to wait for the passage to load |
 | `LIVE_POLL_MS` | `75` | How often to sample the live stats for the peak speed |
 | `LIVE_SETTLE_MS` | `1500` | How long to keep sampling after typing to catch the peak |
-| `HOLD_OPEN_MS` | `120000` | In a visible window, how long to keep it open after the run (or until you close it). Ignored when headless |
+| `HOLD_OPEN_MS` | `120000` | In a visible window, max time to wait for the results screen before closing — the window closes as soon as the results appear. Ignored when headless |
 
 The site re-averages and caps superhuman runs at the end of the test — a passage burst-typed in a second briefly shows thousands of WPM in the live stats but gets reported as a low final number. So instead of reading the end-of-test screen, the tool samples the live stats readout while typing (and for a short settle window afterward), keeps the highest WPM/CPM it sees, and prints that peak, e.g.:
 
