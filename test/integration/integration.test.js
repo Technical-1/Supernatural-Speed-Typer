@@ -5,7 +5,7 @@ const { pathToFileURL } = require('node:url');
 const puppeteer = require('puppeteer-extra');
 // Requiring FlashTyper.js registers the stealth plugin on the shared
 // puppeteer-extra instance, so this test file does not register it again.
-const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR } = require('../../FlashTyper.js');
+const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR, RESULT_SELECTOR } = require('../../FlashTyper.js');
 const { stripStatsPrefix } = require('../../src/text');
 const { typePassage } = require('../../src/typer');
 
@@ -25,11 +25,29 @@ test('runTyper completes cleanly against a local fixture (lifecycle + teardown)'
       headless: true,
       typingDelayMs: 0,
       waitTimeoutMs: 15000,
+      resultTimeoutMs: 15000,
+      holdOpenMs: 0,
     });
     assert.equal(process.exitCode, 0, 'runTyper should finish without setting a failure exit code');
   } finally {
     process.exitCode = initialExitCode;
   }
+});
+
+test('runTyper waits for the results page and returns the parsed result', async () => {
+  const result = await runTyper({
+    url: FIXTURE_URL,
+    executablePath: undefined,
+    headless: true,
+    typingDelayMs: 0,
+    waitTimeoutMs: 15000,
+    resultTimeoutMs: 15000,
+    holdOpenMs: 0,
+  });
+  assert.ok(result, 'runTyper should resolve to a result object');
+  assert.equal(result.wpm, 80);
+  assert.equal(result.accuracy, 100);
+  assert.equal(result.percentile, 98.35);
 });
 
 test('scrape + strip + type writes the passage into the focused field', async () => {
@@ -40,7 +58,16 @@ test('scrape + strip + type writes the passage into the focused field', async ()
   try {
     const page = await browser.newPage();
     await page.goto(FIXTURE_URL, { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector(PASSAGE_SELECTOR, { timeout: 15000 });
+    // Mirror production: wait for the passage to actually load, not merely for
+    // the container node to exist (it mounts empty and fills in asynchronously).
+    await page.waitForFunction(
+      (sel) => {
+        const el = document.querySelector(sel);
+        return !!el && el.textContent.trim().length > 0;
+      },
+      { timeout: 15000 },
+      PASSAGE_SELECTOR
+    );
 
     const rawText = await page.evaluate(
       (sel) => document.querySelector(sel).textContent,

@@ -46,6 +46,14 @@ Configure behavior with environment variables:
 | `HEADLESS` | `false` | Set `true` to run without a visible window |
 | `TYPING_DELAY_MS` | `0` | Per-keystroke delay; higher = more believable WPM |
 | `WAIT_TIMEOUT_MS` | `15000` | How long to wait for the passage to load |
+| `RESULT_TIMEOUT_MS` | `90000` | How long to wait for the results screen after typing (the test runs a fixed ~60s) |
+| `HOLD_OPEN_MS` | `120000` | In a visible window, how long to keep it open on the results screen (or until you close it). Ignored when headless |
+
+After typing, the tool waits for the test to finish, then prints the result, e.g.:
+
+```
+[FlashTyper] Test complete — 132 WPM, 100% accuracy — better than 99.1% of all users
+```
 
 ```bash
 # Example: a believable ~130 WPM run in a headless window

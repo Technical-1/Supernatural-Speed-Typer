@@ -2,8 +2,58 @@
 <html>
   <head><meta charset="utf-8"><title>typing fixture</title></head>
   <body>
-    <div class="screen-display"><span class="stats">AccuracySpeedTimeErrors100%0WPM0CPM60s0/0</span>The quick brown fox⏎jumps over</div>
+    <!-- Mirrors thetypingcat.com: a .screen-display container holding the live
+         stats table (.indicators) and a separate .text passage container. -->
+    <div class="screen-display ">
+      <div class="indicators clearfix">
+        <table>
+          <thead><tr>
+            <th><span>Accuracy</span></th><th colspan="2"><span>Speed</span></th>
+            <th><span>Time</span></th><th><span>Errors</span></th>
+          </tr></thead>
+          <tbody><tr>
+            <td><h3><b>100</b><small>%</small></h3></td>
+            <td class="wpm"><h3><b>0</b><small>WPM</small></h3></td>
+            <td><h3><b>0</b><small>CPM</small></h3></td>
+            <td><h3><b>0</b><small>s</small></h3></td>
+            <td><h3><b>0</b>/<small>0</small></h3></td>
+          </tr></tbody>
+        </table>
+      </div>
+      <!-- Mounts EMPTY, exactly like the live site. The passage streams in a
+           few hundred ms later (see the setTimeout below). -->
+      <div class="text unselectable text-center"></div>
+    </div>
     <textarea id="capture"></textarea>
-    <script>document.getElementById('capture').focus();</script>
+    <script>
+      // The live site renders the passage asynchronously after the container
+      // mounts. Reproduce that race so the readiness wait is actually exercised.
+      setTimeout(function () {
+        document.querySelector('.screen-display .text').innerHTML =
+          '<div class="line active">' +
+            '<span class="word" data-word="The">' +
+              '<span class="char active" data-char="T">T</span>he' +
+            '</span>' +
+            '<span class="char"><span>' +
+              '<i class="spacer"> </i>quick<i class="spacer"> </i>brown<i class="spacer"> </i>fox⏎' +
+            '</span></span>' +
+          '</div>' +
+          '<div class="line next">' +
+            '<span class="char"><span>jumps<i class="spacer"> </i>over</span></span>' +
+          '</div>';
+      }, 300);
+      // Mirror the end of the test: a while after typing, the site replaces the
+      // view with a results container. Inject it later so the results-readiness
+      // wait is genuinely exercised (it must not already be in the DOM).
+      setTimeout(function () {
+        var el = document.createElement('div');
+        el.className = 'container typing-speed-test-result';
+        el.textContent =
+          'Your typing speed is 80WPM Accuracy 100% ' +
+          'It is better than 98.35% of all users';
+        document.body.appendChild(el);
+      }, 600);
+      document.getElementById('capture').focus();
+    </script>
   </body>
 </html>

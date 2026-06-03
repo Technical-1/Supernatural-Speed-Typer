@@ -9,6 +9,15 @@ test('defaults reproduce current behavior when env is empty', () => {
   assert.equal(c.headless, false);
   assert.equal(c.typingDelayMs, 0);
   assert.equal(c.waitTimeoutMs, 15000);
+  assert.equal(c.resultTimeoutMs, 90000);
+  assert.equal(c.holdOpenMs, 120000);
+});
+
+test('RESULT_TIMEOUT_MS and HOLD_OPEN_MS are parsed; bad values fall back', () => {
+  assert.equal(resolveConfig({ RESULT_TIMEOUT_MS: '75000' }).resultTimeoutMs, 75000);
+  assert.equal(resolveConfig({ RESULT_TIMEOUT_MS: 'nope' }).resultTimeoutMs, 90000);
+  assert.equal(resolveConfig({ HOLD_OPEN_MS: '0' }).holdOpenMs, 0);
+  assert.equal(resolveConfig({ HOLD_OPEN_MS: 'nope' }).holdOpenMs, 120000);
 });
 
 test('CHROME_PATH overrides the executable path', () => {
