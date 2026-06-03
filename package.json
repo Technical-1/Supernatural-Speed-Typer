@@ -1,0 +1,19 @@
+{
+  "name": "supernatural-speed-typer",
+  "version": "1.0.0",
+  "description": "Puppeteer-based automation that completes the thetypingcat.com typing speed test.",
+  "main": "FlashTyper.js",
+  "scripts": {
+    "start": "node FlashTyper.js",
+    "test": "node --test test/unit/*.test.js",
+    "test:integration": "node --test test/integration/*.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "puppeteer": "^24.0.0",
+    "puppeteer-extra": "^3.3.6",
+    "puppeteer-extra-plugin-stealth": "^2.11.2"
+  }
+}
