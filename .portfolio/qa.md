@@ -16,7 +16,7 @@ It's a hands-on study of end-to-end browser automation — reading dynamic, fram
 ## Key Features
 
 ### Automated typing at a tunable speed
-The tool reads the test passage and types it character by character. `TYPING_DELAY_MS` controls the gap between keystrokes, which maps directly to the resulting WPM — near-instant at 0 ms, believably human around 80 ms.
+The tool reads the test passage and types it character by character. `TYPING_DELAY_MS` controls the gap between keystrokes: at 0 ms it types in a burst that the live readout clocks in the thousands of WPM, while ~80 ms paces it down to a believably human ~130 WPM.
 
 ### Stealth, isolated browsing
 It runs through `puppeteer-extra` with the stealth plugin to avoid the obvious automation fingerprints, and opens its page inside a fresh browser context so each run is clean and cookieless.
@@ -70,7 +70,7 @@ The site re-averages and caps superhuman runs, so the final screen understates a
 It waits — via `waitForFunction` — for the passage node (`.screen-display .text`) to actually contain non-empty text, reads its text content along with the stats bar text, and runs `stripStatsPrefix` to remove the stats prefix and leave just the passage.
 
 ### How is the typing speed controlled?
-Through `TYPING_DELAY_MS`, the per-keystroke delay passed into `keyboard.type`. Around 0 ms produces roughly 1200 WPM; around 80 ms produces roughly 130 WPM, which reads as a believable human result.
+Through `TYPING_DELAY_MS`, the per-keystroke delay passed into `keyboard.type`. At 0 ms the burst is fast enough that the live readout spikes into the thousands of WPM (and the site caps the final score); around 80 ms produces roughly 130 WPM, which reads as a believable human result the site accepts as-is.
 
 ### Why does it press a key before typing the passage?
 The site starts the timed test on the first keystroke, so the tool types one throwaway character to begin the run, then types the actual passage.

@@ -8,7 +8,7 @@ I built this to explore browser automation with Puppeteer end to end: driving a 
 
 - **Automated typing** — launches Chromium, waits for the test passage to render, scrapes it, and types it character by character (pressing Enter on line breaks).
 - **Peak live speed** — samples the site's live stats readout while typing and keeps the highest WPM/CPM seen, then prints that peak instead of the site's end-of-test number (which caps superhuman runs).
-- **Tunable speed** — `TYPING_DELAY_MS` sets the per-keystroke delay; ~0 ms lands around 1200 WPM, ~80 ms around 130 WPM for a more believable result.
+- **Tunable speed** — `TYPING_DELAY_MS` sets the per-keystroke delay. Near 0 ms the live readout spikes into the thousands of WPM (the site caps the final score for runs that fast); ~80 ms produces a believable ~130 WPM that the site accepts as-is.
 - **Stealth automation** — `puppeteer-extra-plugin-stealth` masks the common headless/automation fingerprints sites use to detect bots.
 - **Resilient scraping** — a stable semantic selector plus dynamic stats stripping survive minor changes to the site's UI instead of breaking on every rebuild.
 - **Portable** — defaults to Puppeteer's bundled Chromium; `CHROME_PATH` points it at a system Chrome instead. Every knob is an environment variable, so there's nothing to edit in code.
@@ -68,7 +68,7 @@ HEADLESS=true TYPING_DELAY_MS=80 npm start
 # Install dependencies
 npm install
 
-# Fast unit tests (config, text cleanup, typing loop)
+# Fast unit tests (config, text cleanup, typing loop, live-stats parsing)
 npm test
 
 # Offline end-to-end test against a local HTML fixture

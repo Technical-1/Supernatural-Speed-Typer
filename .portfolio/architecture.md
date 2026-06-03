@@ -104,3 +104,13 @@ flowchart TD
 - **Context**: The original run had no error handling and never closed the browser, leaking a headful Chromium process on every failure.
 - **Decision**: Open the page from a fresh `createBrowserContext()` and close both context and browser in a `finally` block; signal failure via `process.exitCode`.
 - **Rationale**: No orphaned processes on any path, and each run gets a clean, cookieless session. The isolated context makes the intent explicit instead of silently using the default one.
+
+### One window despite the isolated context
+- **Context**: `puppeteer.launch()` always opens a blank page in the *default* browser context. Opening the real page in a separate `createBrowserContext()` meant a headful run showed two windows — the stray blank one and the actual test page.
+- **Decision**: Capture the default context's pages right after launch and close them once the isolated-context page exists.
+- **Rationale**: Keeps the clean-session benefit of the isolated context without the confusing second window. Reusing the default page instead would have given up the isolation; suppressing the window via flags would have been more brittle than just closing the page I don't need.
+
+### Close on the results redirect, not a fixed timer
+- **Context**: After typing, a visible window used to stay open for a fixed two minutes so the result could be read — long after the run was actually over.
+- **Decision**: Wait for the site to navigate to its results screen (`.typing-speed-test-result`) and close immediately when it appears, with `holdOpenMs` only as a safety cap so the wait can never hang.
+- **Rationale**: The results redirect is the real "run finished" signal, so keying the close on it means the window lingers exactly as long as the test actually takes — no arbitrary delay, no hang if the screen never shows.
