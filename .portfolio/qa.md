@@ -22,7 +22,10 @@ The tool reads the test passage and types it character by character. `TYPING_DEL
 It runs through `puppeteer-extra` with the stealth plugin to avoid the obvious automation fingerprints, and opens its page inside a fresh browser context so each run is clean and cookieless.
 
 ### Resilient scraping
-It targets a semantic class name rather than generated style hashes and strips the page's stats bar dynamically, so routine site changes don't silently break the scrape.
+It targets a semantic class path (`.screen-display .text`) rather than generated style hashes and strips the page's stats bar dynamically, so routine site changes don't silently break the scrape.
+
+### Reports the real result
+After the timed test finishes, the tool waits for the results screen, parses the WPM, accuracy, and "better than X% of all users" percentile, and prints a one-line summary — so a run is self-verifying rather than something you have to eyeball.
 
 ## Technical Highlights
 
@@ -37,6 +40,9 @@ The scraped display text is the stats bar glued to the passage. `stripStatsPrefi
 
 ### Teardown that survives every failure path
 `runTyper` in `FlashTyper.js` wraps the run in `try/catch/finally` with the browser handles hoisted, so the context and browser close whether the run succeeds, throws, or times out — no orphaned Chromium left behind.
+
+### Trusting the screen over the URL for the result
+`parseResult` in `src/result.js` reads the displayed results container first for WPM, accuracy, and the percentile, and only falls back to the figures encoded in the results URL path for fields the screen didn't yield. This matters because instant-typed runs can produce a URL figure that diverges from what the screen actually shows — and the screen is what a human would read, so it's the honest number to report.
 
 ## Engineering Decisions
 
@@ -61,7 +67,7 @@ The scraped display text is the stats bar glued to the passage. `stripStatsPrefi
 ## Frequently Asked Questions
 
 ### How does the tool know what to type?
-It waits for the passage element (`.screen-display`) to render, reads its text content along with the stats bar text, and runs `stripStatsPrefix` to remove the stats prefix and leave just the passage.
+It waits — via `waitForFunction` — for the passage node (`.screen-display .text`) to actually contain non-empty text, reads its text content along with the stats bar text, and runs `stripStatsPrefix` to remove the stats prefix and leave just the passage.
 
 ### How is the typing speed controlled?
 Through `TYPING_DELAY_MS`, the per-keystroke delay passed into `keyboard.type`. Around 0 ms produces roughly 1200 WPM; around 80 ms produces roughly 130 WPM, which reads as a believable human result.
@@ -69,8 +75,11 @@ Through `TYPING_DELAY_MS`, the per-keystroke delay passed into `keyboard.type`. 
 ### Why does it press a key before typing the passage?
 The site starts the timed test on the first keystroke, so the tool types one throwaway character to begin the run, then types the actual passage.
 
-### Why scrape `.screen-display` instead of a more specific selector?
-The site is built with styled-components, whose generated class names change on every rebuild. A semantic class like `.screen-display` is stable, so the scrape doesn't break when the build hashes change.
+### Why scrape `.screen-display .text` instead of a hash-based selector?
+The site is built with styled-components, whose generated class names change on every rebuild. Semantic classes like `.screen-display .text` are stable, so the scrape doesn't break when the build hashes change. Scoping to the inner `.text` node also keeps the sibling stats table (`.indicators`) out of the scrape entirely.
+
+### How does it report the result?
+After typing, it waits for the results screen (the site runs a fixed ~60s timer first), then `parseResult` reads the WPM, accuracy, and percentile and logs a line like `Test complete — 132 WPM, 100% accuracy — better than 99.1% of all users`. In a visible window it also stays open afterward so you can read the screen yourself, until you close it or `HOLD_OPEN_MS` elapses.
 
 ### Why is the stats stripping done with a regex fallback at all?
 The preferred path slices an exact, live-read stats string. The regex exists only for when that text isn't available, and it's deliberately conservative — it requires a numeric token before stripping, so it can't accidentally remove real passage words.
