@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg:      #07080d;
+    --ink:     #f4f6ff;
+    --muted:   #8b93b4;
+    --cyan:    #34e3ff;
+    --violet:  #a07bff;
+    --green:   #6ef0a8;
+  }
+
+  body { background: var(--bg); }
+
+  .og-card {
+    width: 1200px;
+    height: 630px;
+    position: relative;
+    overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 88% -10%, rgba(52,227,255,0.18), transparent 60%),
+      radial-gradient(760px 520px at -8% 115%, rgba(160,123,255,0.20), transparent 60%),
+      var(--bg);
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--ink);
+  }
+
+  /* fine dot grid */
+  .grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(148,163,210,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(148,163,210,0.055) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(1100px 700px at 50% 40%, #000 55%, transparent 100%);
+  }
+
+  /* horizontal velocity streaks */
+  .streaks { position: absolute; inset: 0; overflow: hidden; }
+  .streak {
+    position: absolute; left: -10%; height: 2px; width: 120%;
+    background: linear-gradient(90deg, transparent, rgba(52,227,255,0.0) 8%, rgba(52,227,255,0.55) 60%, rgba(255,255,255,0.9) 88%, transparent);
+    filter: blur(0.4px);
+    opacity: 0.5;
+  }
+  .streak.v { background: linear-gradient(90deg, transparent, rgba(160,123,255,0) 8%, rgba(160,123,255,0.5) 60%, rgba(255,255,255,0.85) 90%, transparent); }
+  .s1 { top: 140px; opacity: 0.30; }
+  .s2 { top: 250px; opacity: 0.55; height: 3px; }
+  .s3 { top: 318px; opacity: 0.22; }
+  .s4 { top: 470px; opacity: 0.40; }
+  .s5 { top: 545px; opacity: 0.30; }
+
+  /* directional scrim — opaque over the text column, clear over the art */
+  .scrim {
+    position: absolute; inset: 0; z-index: 3;
+    background: linear-gradient(102deg,
+      rgba(7,8,13,0.95) 33%,
+      rgba(7,8,13,0.80) 47%,
+      rgba(7,8,13,0.34) 59%,
+      rgba(7,8,13,0) 70%);
+  }
+
+  /* ghosted hero number — supernatural after-image trail */
+  .ghost {
+    position: absolute; right: -28px; top: 50%;
+    transform: translateY(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 700;
+    font-size: 400px;
+    line-height: 0.8;
+    letter-spacing: -10px;
+    white-space: nowrap;
+    user-select: none;
+  }
+  .ghost span { position: absolute; right: 0; top: 0; }
+  .ghost .t1 { color: rgba(52,227,255,0.05);  transform: translateX(-140px); }
+  .ghost .t2 { color: rgba(52,227,255,0.08);  transform: translateX(-95px); }
+  .ghost .t3 { color: rgba(160,123,255,0.12); transform: translateX(-52px); }
+  .ghost .t4 {
+    color: transparent;
+    -webkit-text-stroke: 2px rgba(244,246,255,0.16);
+    transform: translateX(-20px);
+  }
+  .ghost .lead {
+    background: linear-gradient(180deg, #ffffff 0%, #b8eaff 45%, #6fd6ff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+    text-shadow: 0 0 60px rgba(52,227,255,0.25);
+  }
+
+  /* foreground content */
+  .content {
+    position: absolute; inset: 0;
+    padding: 64px 70px;
+    display: flex; flex-direction: column; justify-content: space-between;
+    z-index: 5;
+  }
+
+  .top { display: flex; align-items: center; gap: 16px; }
+
+  .badge {
+    margin-left: auto;
+    display: inline-flex; align-items: center; gap: 9px;
+    padding: 9px 16px; border-radius: 999px;
+    border: 1px solid rgba(110,240,168,0.35);
+    background: rgba(110,240,168,0.08);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 16px; letter-spacing: 0.5px; color: var(--green);
+  }
+  .badge .pulse { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 14px var(--green); }
+
+  .mid { max-width: 760px; }
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 18px; letter-spacing: 5px; text-transform: uppercase;
+    color: var(--cyan);
+  }
+  h1 {
+    font-size: 92px; font-weight: 700; line-height: 0.96;
+    letter-spacing: -2.5px; margin-bottom: 22px;
+  }
+  h1 .glow {
+    background: linear-gradient(95deg, #34e3ff 0%, #a07bff 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .tagline {
+    font-size: 25px; line-height: 1.45; color: #c7cde6;
+    max-width: 560px; font-weight: 500;
+  }
+
+  .bottom { display: flex; align-items: flex-end; gap: 16px; }
+  .out {
+    flex: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 19px;
+    padding: 15px 20px;
+    border-radius: 14px;
+    border: 1px solid rgba(52,227,255,0.22);
+    background: linear-gradient(180deg, rgba(13,17,30,0.85), rgba(10,12,22,0.85));
+    color: var(--muted);
+    display: flex; align-items: center; gap: 4px;
+    white-space: nowrap;
+  }
+  .out .tag { color: var(--cyan); }
+  .out .label { color: #aab2d4; }
+  .out .num { color: #ffffff; font-weight: 700; }
+  .out .unit { color: var(--green); font-weight: 700; }
+  .out .cursor {
+    display: inline-block; width: 12px; height: 24px;
+    background: var(--cyan); margin-left: 6px; border-radius: 2px;
+    box-shadow: 0 0 14px rgba(52,227,255,0.8);
+  }
+
+  .pills { display: flex; gap: 10px; }
+  .pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px; padding: 10px 13px; border-radius: 10px;
+    border: 1px solid rgba(148,163,210,0.18);
+    background: rgba(14,16,28,0.6); color: #c2c9e4;
+  }
+
+</style>
+</head>
+<body>
+  <div class="og-card">
+    <div class="grid"></div>
+
+    <div class="streaks">
+      <div class="streak s1"></div>
+      <div class="streak v s2"></div>
+      <div class="streak s3"></div>
+      <div class="streak v s4"></div>
+      <div class="streak s5"></div>
+    </div>
+
+    <div class="ghost">
+      <span class="t1">10788</span>
+      <span class="t2">10788</span>
+      <span class="t3">10788</span>
+      <span class="t4">10788</span>
+      <span class="lead">10788</span>
+    </div>
+
+    <div class="scrim"></div>
+
+    <div class="content">
+      <div class="top">
+        <div class="eyebrow">Browser&nbsp;Automation&nbsp;·&nbsp;Puppeteer</div>
+        <div class="badge"><span class="pulse"></span> SUPERHUMAN WPM</div>
+      </div>
+
+      <div class="mid">
+        <h1>Supernatural<br><span class="glow">Speed&nbsp;Typer</span></h1>
+        <p class="tagline">Replays the typing-cat speed test as real keystrokes through a stealth-patched Chromium — bursting past human limits.</p>
+      </div>
+
+      <div class="bottom">
+        <div class="out">
+          <span class="tag">[FlashTyper]</span>&nbsp;<span class="label">Peak live speed —</span>&nbsp;<span class="num">10,788</span>&nbsp;<span class="unit">WPM</span>&nbsp;<span class="label">·</span>&nbsp;<span class="num">53,940</span>&nbsp;<span class="unit">CPM</span><span class="cursor"></span>
+        </div>
+        <div class="pills">
+          <span class="pill">Node.js</span>
+          <span class="pill">Stealth</span>
+          <span class="pill">node:test</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
