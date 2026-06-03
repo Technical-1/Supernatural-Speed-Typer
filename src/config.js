@@ -18,6 +18,10 @@ function resolveConfig(env = process.env) {
     // After results load in a visible window, keep it open this long (or until
     // the user closes it) so the result can be viewed live. Ignored when headless.
     holdOpenMs: intFromEnv(env.HOLD_OPEN_MS, 120000),
+    // How often to sample the live .indicators stats while typing, and how long
+    // to keep sampling after the typing burst to catch the post-burst spike.
+    livePollMs: intFromEnv(env.LIVE_POLL_MS, 75),
+    liveSettleMs: intFromEnv(env.LIVE_SETTLE_MS, 1500),
   };
 }
 
