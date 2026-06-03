@@ -54,7 +54,7 @@ Configure behavior with environment variables:
 The site re-averages and caps superhuman runs at the end of the test — a passage burst-typed in a second briefly shows thousands of WPM in the live stats but gets reported as a low final number. So instead of reading the end-of-test screen, the tool samples the live stats readout while typing (and for a short settle window afterward), keeps the highest WPM/CPM it sees, and prints that peak, e.g.:
 
 ```
-[FlashTyper] Peak live speed — 4200 WPM, 8400 CPM
+[FlashTyper] Peak live speed — 10788 WPM, 53940 CPM
 ```
 
 ```bash
