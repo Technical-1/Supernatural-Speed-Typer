@@ -28,4 +28,12 @@ function mergePeak(peak, sample) {
   };
 }
 
-module.exports = { parseLiveStats, mergePeak };
+function formatPeak(peak) {
+  if (!peak) return '';
+  const parts = [];
+  if (peak.wpm != null) parts.push(`${peak.wpm} WPM`);
+  if (peak.cpm != null) parts.push(`${peak.cpm} CPM`);
+  return parts.join(', ');
+}
+
+module.exports = { parseLiveStats, mergePeak, formatPeak };

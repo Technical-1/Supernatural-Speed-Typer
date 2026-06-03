@@ -44,3 +44,19 @@ test('mergePeak treats null as "no value" on either side', () => {
 test('mergePeak tolerates a missing sample object', () => {
   assert.deepEqual(mergePeak(EMPTY_PEAK, null), { wpm: null, cpm: null });
 });
+
+const { formatPeak } = require('../../src/stats');
+
+test('formatPeak renders both fields', () => {
+  assert.equal(formatPeak({ wpm: 4200, cpm: 8400 }), '4200 WPM, 8400 CPM');
+});
+
+test('formatPeak omits a null field', () => {
+  assert.equal(formatPeak({ wpm: 4200, cpm: null }), '4200 WPM');
+  assert.equal(formatPeak({ wpm: null, cpm: 8400 }), '8400 CPM');
+});
+
+test('formatPeak returns an empty string when nothing was captured', () => {
+  assert.equal(formatPeak({ wpm: null, cpm: null }), '');
+  assert.equal(formatPeak(null), '');
+});
