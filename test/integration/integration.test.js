@@ -5,7 +5,7 @@ const { pathToFileURL } = require('node:url');
 const puppeteer = require('puppeteer-extra');
 // Requiring FlashTyper.js registers the stealth plugin on the shared
 // puppeteer-extra instance, so this test file does not register it again.
-const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR, RESULT_SELECTOR } = require('../../FlashTyper.js');
+const { runTyper, PASSAGE_SELECTOR, STATS_SELECTOR } = require('../../FlashTyper.js');
 const { stripStatsPrefix } = require('../../src/text');
 const { typePassage } = require('../../src/typer');
 

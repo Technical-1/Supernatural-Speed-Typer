@@ -53,17 +53,6 @@
       }
       setTimeout(function () { setLive(1200, 2400); }, 350);
       setTimeout(function () { setLive(4200, 8400); }, 500);
-      // Mirror the end of the test: a while after typing, the site replaces the
-      // view with a results container. Inject it later so the results-readiness
-      // wait is genuinely exercised (it must not already be in the DOM).
-      setTimeout(function () {
-        var el = document.createElement('div');
-        el.className = 'container typing-speed-test-result';
-        el.textContent =
-          'Your typing speed is 80WPM Accuracy 100% ' +
-          'It is better than 98.35% of all users';
-        document.body.appendChild(el);
-      }, 600);
       document.getElementById('capture').focus();
     </script>
   </body>
