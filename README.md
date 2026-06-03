@@ -1,24 +1,43 @@
-# Supernatural-Speed-Typer
+# Supernatural Speed Typer
 
-Puppeteer based "thetypingcat" cheater. Opens up the site and grabs all of the text for the speed test and loops through each individual character emulating a user completing the test.
+A Node.js browser-automation tool that completes the typing-speed test at [thetypingcat.com](https://thetypingcat.com) by scraping the prompt and replaying it as real keystrokes through a stealth-patched Chromium.
 
+I built this to explore browser automation with Puppeteer end to end: driving a real Chromium session, reading dynamic page content, and synthesizing human-like keyboard input. A configurable per-keystroke delay maps directly to the resulting words-per-minute, and the scraping and typing logic is split into small, unit-tested modules so the browser-dependent glue stays thin.
 
-Changing the typing delay gives a variety of results. The higher the delay the more believable the result.
+## Features
 
-Delay 80ms  ~130 WPM
+- **Automated typing** — launches Chromium, waits for the test passage to render, scrapes it, and types it character by character (pressing Enter on line breaks).
+- **Tunable speed** — `TYPING_DELAY_MS` sets the per-keystroke delay; ~0 ms lands around 1200 WPM, ~80 ms around 130 WPM for a more believable result.
+- **Stealth automation** — `puppeteer-extra-plugin-stealth` masks the common headless/automation fingerprints sites use to detect bots.
+- **Resilient scraping** — a stable semantic selector plus dynamic stats stripping survive minor changes to the site's UI instead of breaking on every rebuild.
+- **Portable** — defaults to Puppeteer's bundled Chromium; `CHROME_PATH` points it at a system Chrome instead. Every knob is an environment variable, so there's nothing to edit in code.
+- **Tested** — pure logic is covered by `node:test` unit tests, and an offline HTML fixture drives a deterministic end-to-end test with no dependency on the live site.
 
-Delay 20ms  ~400 WPM
+## Tech Stack
 
-Delay 0ms  ~1200 WPM
+- **Language**: Node.js (CommonJS)
+- **Automation**: Puppeteer 24 with `puppeteer-extra` + stealth plugin
+- **Testing**: Node's built-in test runner (`node:test`)
 
-## Setup
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18 or newer
+
+### Installation
 
 ```bash
 npm install      # installs Puppeteer + stealth plugin and a bundled Chromium
-npm start        # runs FlashTyper.js against thetypingcat.com
 ```
 
-## Configuration (environment variables)
+### Usage
+
+```bash
+npm start        # runs against thetypingcat.com with default settings
+```
+
+Configure behavior with environment variables:
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
@@ -28,9 +47,43 @@ npm start        # runs FlashTyper.js against thetypingcat.com
 | `TYPING_DELAY_MS` | `0` | Per-keystroke delay; higher = more believable WPM |
 | `WAIT_TIMEOUT_MS` | `15000` | How long to wait for the passage to load |
 
-## Tests
+```bash
+# Example: a believable ~130 WPM run in a headless window
+HEADLESS=true TYPING_DELAY_MS=80 npm start
+```
+
+## Development
 
 ```bash
-npm test                   # fast unit tests (config, text, typer)
-npm run test:integration   # offline end-to-end against a local fixture
+# Install dependencies
+npm install
+
+# Fast unit tests (config, text cleanup, typing loop)
+npm test
+
+# Offline end-to-end test against a local HTML fixture
+npm run test:integration
 ```
+
+## Project Structure
+
+```
+Supernatural-Speed-Typer/
+├── FlashTyper.js          # Orchestrator: browser lifecycle, scrape, type
+├── src/
+│   ├── config.js          # Environment-driven configuration
+│   ├── text.js            # Stats-prefix stripping (scrape cleanup)
+│   └── typer.js           # Code-point-safe keystroke loop
+└── test/
+    ├── unit/              # Pure-logic unit tests
+    ├── integration/       # Offline end-to-end test (real Chromium)
+    └── fixtures/          # Local HTML fixture mirroring the test page
+```
+
+## License
+
+Unlicensed (personal project).
+
+## Author
+
+Jacob Kanfer — [GitHub](https://github.com/Technical-1)
